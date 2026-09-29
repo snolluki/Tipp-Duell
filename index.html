@@ -1,0 +1,409 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tipp-Duell 🚀 5. Klasse</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .star-track {
+            background: linear-gradient(90deg, #1e293b 0%, #334155 100%);
+        }
+        .star-icon {
+            transition: left 0.15s ease-out;
+        }
+        .text-char-correct {
+            background-color: #10b981;
+            color: #ffffff;
+            border-radius: 2px;
+        }
+        .text-char-wrong {
+            background-color: #ef4444;
+            color: #ffffff;
+            border-radius: 2px;
+        }
+        .text-char-current {
+            border-bottom: 3px solid #f59e0b;
+            background-color: rgba(245, 158, 11, 0.2);
+        }
+    </style>
+</head>
+<body class="bg-slate-950 text-slate-100 min-h-screen flex flex-col font-sans select-none antialiased">
+
+    <!-- HEADER -->
+    <header class="bg-slate-900 border-b border-slate-800 py-3 text-center shadow-lg">
+        <h1 class="text-2xl font-black text-amber-400 tracking-wider">⌨️ TIPP-DUELL 🚀</h1>
+        <p class="text-xs text-slate-400 font-bold uppercase mt-0.5">Das Schnelligkeits-Duell der 5. Klasse</p>
+    </header>
+
+    <main class="flex-grow p-4 max-w-xl mx-auto w-full flex flex-col justify-center">
+
+        <!-- 1. START / LOBBY SCREEN -->
+        <div id="screen-lobby" class="bg-slate-900 p-6 rounded-3xl border-2 border-slate-800 shadow-2xl space-y-5">
+            <div class="text-center">
+                <h2 class="text-xl font-black text-amber-400">Willkommen zum Tipp-Duell!</h2>
+                <p class="text-xs text-slate-400 mt-1">Gib deinen Namen ein und starte ein Match gegen einen Mitschüler.</p>
+            </div>
+
+            <div class="space-y-3">
+                <div>
+                    <label class="block text-xs font-bold text-slate-300 mb-1">Dein Name / Spitzname:</label>
+                    <input type="text" id="input-name" placeholder="z. B. Alex" maxlength="15"
+                           class="w-full bg-slate-950 border border-slate-700 rounded-2xl py-3 px-4 text-white font-bold focus:outline-none focus:border-amber-400 text-sm">
+                </div>
+
+                <div class="grid grid-cols-1 gap-3 pt-2">
+                    <button onclick="createRoom()" class="w-full bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-slate-950 font-black py-3.5 rounded-2xl shadow-lg transition active:scale-95 text-sm">
+                        ➕ Raum erstellen
+                    </button>
+
+                    <div class="flex items-center gap-2 my-1">
+                        <div class="flex-grow h-px bg-slate-800"></div>
+                        <span class="text-[10px] text-slate-500 font-bold uppercase">oder beitreten</span>
+                        <div class="flex-grow h-px bg-slate-800"></div>
+                    </div>
+
+                    <div class="flex gap-2">
+                        <input type="number" id="input-code" placeholder="4-stelliger Code"
+                               class="w-1/2 bg-slate-950 border border-slate-700 rounded-2xl py-3 px-3 text-white font-bold text-center focus:outline-none focus:border-amber-400 text-sm tracking-widest">
+                        <button onclick="joinRoom()" class="w-1/2 bg-indigo-600 hover:bg-indigo-700 text-white font-black py-3.5 rounded-2xl shadow-lg transition active:scale-95 text-sm">
+                            🔑 Beitreten
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 2. WARTE-SCREEN (Warten auf Spieler 2) -->
+        <div id="screen-waiting" class="hidden bg-slate-900 p-6 rounded-3xl border-2 border-slate-800 shadow-2xl text-center space-y-4">
+            <div class="text-4xl animate-bounce">⏳</div>
+            <h2 class="text-lg font-black text-amber-400">Warte auf Mitspieler...</h2>
+            <p class="text-xs text-slate-400">Teile diesen Raum-Code mit deinem Mitschüler:</p>
+            <div id="display-room-code" class="text-4xl font-black font-mono tracking-widest bg-slate-950 py-3 px-6 rounded-2xl border border-amber-500/30 text-amber-400 inline-block">
+                ----
+            </div>
+        </div>
+
+        <!-- 3. GAMEPLAY SCREEN -->
+        <div id="screen-game" class="hidden space-y-4">
+
+            <!-- CODE BANNER -->
+            <div class="flex justify-between items-center bg-slate-900 px-4 py-2 rounded-2xl border border-slate-800 text-xs font-bold">
+                <span class="text-slate-400">Raum-Code: <span id="game-room-code" class="text-amber-400 font-mono font-black">----</span></span>
+                <span id="game-status-badge" class="bg-amber-500/20 text-amber-400 px-2.5 py-1 rounded-xl text-[10px] border border-amber-500/30">Warten</span>
+            </div>
+
+            <!-- FORTSCHRITTSLEISTEN MIT STERNEN ⭐ -->
+            <div class="bg-slate-900 p-4 rounded-3xl border-2 border-slate-800 shadow-xl space-y-4">
+                
+                <!-- DU (Spieler 1) -->
+                <div>
+                    <div class="flex justify-between text-xs font-black mb-1">
+                        <span id="p1-name-display" class="text-amber-400">Du</span>
+                        <span id="p1-stats-display" class="text-slate-400 font-mono">0%</span>
+                    </div>
+                    <div class="relative w-full h-8 rounded-2xl star-track border border-slate-700/60 overflow-hidden flex items-center px-1">
+                        <div id="p1-bar-fill" class="absolute left-0 top-0 bottom-0 bg-amber-500/20 transition-all duration-150" style="width: 0%"></div>
+                        <!-- Der Stern -->
+                        <div id="p1-star" class="absolute star-icon text-xl text-amber-400 drop-shadow-[0_0_8px_rgba(245,158,11,0.8)]" style="left: 0%">
+                            ⭐
+                        </div>
+                    </div>
+                </div>
+
+                <!-- GEGNER (Spieler 2) -->
+                <div>
+                    <div class="flex justify-between text-xs font-black mb-1">
+                        <span id="p2-name-display" class="text-indigo-400">Gegner</span>
+                        <span id="p2-stats-display" class="text-slate-400 font-mono">0%</span>
+                    </div>
+                    <div class="relative w-full h-8 rounded-2xl star-track border border-slate-700/60 overflow-hidden flex items-center px-1">
+                        <div id="p2-bar-fill" class="absolute left-0 top-0 bottom-0 bg-indigo-500/20 transition-all duration-150" style="width: 0%"></div>
+                        <!-- Der Stern -->
+                        <div id="p2-star" class="absolute star-icon text-xl text-indigo-400 drop-shadow-[0_0_8px_rgba(99,102,241,0.8)]" style="left: 0%">
+                            ⭐
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- TEXT-DISPLAY & EINGABE -->
+            <div class="bg-slate-900 p-5 rounded-3xl border-2 border-slate-800 shadow-xl space-y-4 relative">
+                
+                <!-- COUNTDOWN OVERLAY -->
+                <div id="countdown-overlay" class="hidden absolute inset-0 bg-slate-950/90 backdrop-blur-xs rounded-3xl flex flex-col items-center justify-center z-20">
+                    <span class="text-slate-400 text-xs font-bold uppercase tracking-wider mb-1">Bereitmachen!</span>
+                    <span id="countdown-number" class="text-6xl font-black text-amber-400 animate-ping">3</span>
+                </div>
+
+                <!-- ANZEIGE DES TEXTES -->
+                <div id="text-display" class="bg-slate-950 p-4 rounded-2xl border border-slate-800 font-mono text-base leading-relaxed tracking-wide min-h-[100px] break-words">
+                    <!-- Text wird hier dynamisch mit Highlighting gerendert -->
+                </div>
+
+                <!-- EINGABE-FELD -->
+                <textarea id="typing-input" rows="2" placeholder="Tippe hier den oberen Text exakt ab..." disabled
+                          class="w-full bg-slate-950 border-2 border-slate-700 rounded-2xl p-3 text-white font-mono text-sm focus:outline-none focus:border-amber-400 transition resize-none disabled:opacity-40"></textarea>
+
+                <!-- LIVE STATS -->
+                <div class="flex justify-between items-center text-[11px] font-bold text-slate-400 border-t border-slate-800/80 pt-2">
+                    <span>Tempo: <span id="stat-cpm" class="text-amber-400 font-mono">0</span> Z/Min</span>
+                    <span>Fehler: <span id="stat-errors" class="text-red-400 font-mono">0</span></span>
+                    <span>Genauigkeit: <span id="stat-accuracy" class="text-emerald-400 font-mono">100%</span></span>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- 4. GEWINNER / ENDSCREEN MODAL -->
+        <div id="modal-winner" class="hidden fixed inset-0 bg-slate-950/95 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+            <div class="bg-slate-900 rounded-3xl border-2 border-slate-800 p-6 max-w-sm w-full text-center shadow-2xl space-y-4">
+                <div id="winner-icon" class="text-6xl">🏆</div>
+                <h2 id="winner-title" class="text-2xl font-black text-amber-400 uppercase">Gewonnen!</h2>
+                <p id="winner-text" class="text-xs text-slate-300 font-semibold">Du warst schneller als dein Gegner!</p>
+                
+                <div class="bg-slate-950 p-3 rounded-2xl border border-slate-800 text-xs space-y-1 font-mono">
+                    <div class="flex justify-between">
+                        <span class="text-slate-500">Dein Tempo:</span>
+                        <span id="final-cpm" class="text-amber-400 font-bold">0 Z/Min</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-slate-500">Fehleranzahl:</span>
+                        <span id="final-errors" class="text-red-400 font-bold">0</span>
+                    </div>
+                </div>
+
+                <div class="flex gap-2">
+                    <button onclick="restartGame()" class="w-full bg-amber-500 hover:bg-amber-600 text-slate-950 font-black py-3 rounded-2xl text-xs active:scale-95 transition">
+                        🔄 Noch eine Runde
+                    </button>
+                    <button onclick="location.reload()" class="w-full bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold py-3 rounded-2xl text-xs active:scale-95 transition">
+                        🚪 Beenden
+                    </button>
+                </div>
+            </div>
+        </div>
+
+    </main>
+
+    <script>
+        // Token für diesen Tab/Spieler
+        let myToken = sessionStorage.getItem('tipp_token');
+        if (!myToken) {
+            myToken = 'p_' + Math.random().toString(36).substring(2, 11);
+            sessionStorage.setItem('tipp_token', myToken);
+        }
+
+        let currentRoomCode = null;
+        let roomData = null;
+        let eventSource = null;
+        let myName = '';
+        let startTime = null;
+
+        const screenLobby = document.getElementById('screen-lobby');
+        const screenWaiting = document.getElementById('screen-waiting');
+        const screenGame = document.getElementById('screen-game');
+        const typingInput = document.getElementById('typing-input');
+        const textDisplay = document.getElementById('text-display');
+
+        async function sendAction(type, payload = {}) {
+            await fetch('/action', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ type, token: myToken, payload })
+            });
+        }
+
+        async function createRoom() {
+            myName = document.getElementById('input-name').value.trim() || 'Spieler 1';
+            const res = await fetch('/action', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ type: 'CREATE_ROOM', token: myToken, payload: { name: myName } })
+            });
+            const data = await res.json();
+            if (data.success) {
+                currentRoomCode = data.roomCode;
+                connectSSE();
+                showWaitingScreen();
+            }
+        }
+
+        async function joinRoom() {
+            myName = document.getElementById('input-name').value.trim() || 'Spieler 2';
+            const code = document.getElementById('input-code').value.trim();
+            if (!code) { alert('Bitte Raum-Code eingeben!'); return; }
+
+            const res = await fetch('/action', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ type: 'JOIN_ROOM', token: myToken, payload: { roomCode: code, name: myName } })
+            });
+            const data = await res.json();
+            if (data.error) {
+                alert(data.error);
+            } else {
+                currentRoomCode = data.roomCode;
+                connectSSE();
+            }
+        }
+
+        function connectSSE() {
+            if (eventSource) eventSource.close();
+            eventSource = new EventSource(`/events?room=${currentRoomCode}&token=${myToken}`);
+            eventSource.onmessage = (e) => {
+                roomData = JSON.parse(e.data);
+                renderState();
+            };
+        }
+
+        function showWaitingScreen() {
+            screenLobby.classList.add('hidden');
+            screenWaiting.classList.remove('hidden');
+            document.getElementById('display-room-code').textContent = currentRoomCode;
+        }
+
+        function renderState() {
+            if (!roomData) return;
+
+            // Status: Warten auf 2. Spieler
+            if (roomData.status === 'waiting') {
+                showWaitingScreen();
+                return;
+            }
+
+            // Status: Countdown oder Spielen
+            screenLobby.classList.add('hidden');
+            screenWaiting.classList.add('hidden');
+            screenGame.classList.remove('hidden');
+
+            document.getElementById('game-room-code').textContent = roomData.code;
+
+            // Spieler zuordnen (Du vs. Gegner)
+            const myPlayer = roomData.players.find(p => p.token === myToken);
+            const opponent = roomData.players.find(p => p.token !== myToken);
+
+            // Namen anzeigen
+            document.getElementById('p1-name-display').textContent = myPlayer ? `${myPlayer.name} (Du)` : 'Du';
+            document.getElementById('p2-name-display').textContent = opponent ? opponent.name : 'Warte auf Gegner...';
+
+            // Fortschritt (Sterne ⭐ bewegen)
+            const p1Prog = myPlayer ? myPlayer.progress : 0;
+            const p2Prog = opponent ? opponent.progress : 0;
+
+            document.getElementById('p1-stats-display').textContent = `${p1Prog}%`;
+            document.getElementById('p1-bar-fill').style.width = `${p1Prog}%`;
+            document.getElementById('p1-star').style.left = `calc(${Math.min(92, p1Prog)}%)`;
+
+            document.getElementById('p2-stats-display').textContent = `${p2Prog}%`;
+            document.getElementById('p2-bar-fill').style.width = `${p2Prog}%`;
+            document.getElementById('p2-star').style.left = `calc(${Math.min(92, p2Prog)}%)`;
+
+            // Countdown Handling
+            const overlay = document.getElementById('countdown-overlay');
+            if (roomData.status === 'countdown') {
+                overlay.classList.remove('hidden');
+                document.getElementById('countdown-number').textContent = roomData.countdown;
+                typingInput.disabled = true;
+                typingInput.value = '';
+                renderTextHighlighting('');
+            } else if (roomData.status === 'playing') {
+                overlay.classList.add('hidden');
+                if (typingInput.disabled && !myPlayer?.finished) {
+                    typingInput.disabled = false;
+                    typingInput.focus();
+                    startTime = Date.now();
+                }
+                document.getElementById('game-status-badge').textContent = '⚔️ Duell läuft!';
+            }
+
+            // Winner Modal
+            if (roomData.status === 'finished') {
+                typingInput.disabled = true;
+                const modal = document.getElementById('modal-winner');
+                modal.classList.remove('hidden');
+
+                const isWinner = roomData.winnerToken === myToken;
+                document.getElementById('winner-icon').textContent = isWinner ? '🏆' : '🥈';
+                document.getElementById('winner-title').textContent = isWinner ? 'Gewonnen!' : 'Zweiter Platz!';
+                document.getElementById('winner-text').textContent = isWinner 
+                    ? 'Super gemacht! Du hast den Text schneller abgetippt.' 
+                    : 'Knapp verloren! Dein Gegner war diesmal ein Stück schneller.';
+
+                if (myPlayer) {
+                    document.getElementById('final-cpm').textContent = `${myPlayer.cpm} Z/Min`;
+                    document.getElementById('final-errors').textContent = myPlayer.errors;
+                }
+            } else {
+                document.getElementById('modal-winner').classList.add('hidden');
+            }
+        }
+
+        // TEXT HIGHLIGHTING & TIPP-LOGIK
+        function renderTextHighlighting(typed) {
+            if (!roomData || !roomData.text) return;
+            const targetText = roomData.text;
+            let html = '';
+
+            for (let i = 0; i < targetText.length; i++) {
+                const targetChar = targetText[i];
+                if (i < typed.length) {
+                    if (typed[i] === targetChar) {
+                        html += `<span class="text-char-correct">${targetChar}</span>`;
+                    } else {
+                        html += `<span class="text-char-wrong">${targetChar === ' ' ? '&nbsp;' : targetChar}</span>`;
+                    }
+                } else if (i === typed.length) {
+                    html += `<span class="text-char-current">${targetChar}</span>`;
+                } else {
+                    html += `<span class="text-slate-400">${targetChar}</span>`;
+                }
+            }
+            textDisplay.innerHTML = html;
+        }
+
+        typingInput.addEventListener('input', () => {
+            if (!roomData || roomData.status !== 'playing') return;
+
+            const typed = typingInput.value;
+            const target = roomData.text;
+
+            // Fehler zählen
+            let errors = 0;
+            for (let i = 0; i < typed.length; i++) {
+                if (typed[i] !== target[i]) errors++;
+            }
+
+            // Fortschritt berechnen
+            const correctChars = Math.max(0, typed.length - errors);
+            const progress = Math.min(100, Math.floor((typed.length / target.length) * 100));
+
+            // Tempo (Zeichen pro Minute)
+            const elapsedMinutes = (Date.now() - (startTime || Date.now())) / 60000;
+            const cpm = elapsedMinutes > 0 ? Math.floor(typed.length / elapsedMinutes) : 0;
+
+            // Stats UI
+            document.getElementById('stat-cpm').textContent = cpm;
+            document.getElementById('stat-errors').textContent = errors;
+            const accuracy = typed.length > 0 ? Math.max(0, Math.floor(((typed.length - errors) / typed.length) * 100)) : 100;
+            document.getElementById('stat-accuracy').textContent = `${accuracy}%`;
+
+            renderTextHighlighting(typed);
+
+            // Sende Update an Server
+            sendAction('UPDATE_PROGRESS', {
+                roomCode: currentRoomCode,
+                progress: (typed === target) ? 100 : progress,
+                typedLength: typed.length,
+                errors,
+                cpm
+            });
+        });
+
+        function restartGame() {
+            sendAction('RESTART_GAME', { roomCode: currentRoomCode });
+        }
+    </script>
+</body>
+</html>
