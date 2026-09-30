@@ -345,8 +345,23 @@
         typingInput.addEventListener('input', () => {
             if (!roomData || roomData.status !== 'playing') return;
 
-            const typed = typingInput.value;
+            let rawTyped = typingInput.value;
             const target = roomData.text;
+            let typed = "";
+
+            // Automatische Umwandlung von normalen Anführungszeichen (") zu typografischen („ oder “)
+            for (let i = 0; i < rawTyped.length; i++) {
+                if (rawTyped[i] === '"' && target[i] !== undefined && (target[i] === '„' || target[i] === '“')) {
+                    typed += target[i];
+                } else {
+                    typed += rawTyped[i];
+                }
+            }
+
+            // Textfeld aktualisieren, falls ein Zeichen umgewandelt wurde
+            if (rawTyped !== typed) {
+                typingInput.value = typed;
+            }
 
             let errors = 0;
             for (let i = 0; i < typed.length; i++) {
