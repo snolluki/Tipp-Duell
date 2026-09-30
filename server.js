@@ -17,7 +17,7 @@ const TEXTS = [
     "Am Freitag fahren 25 Schüler nach Berlin. Herr Müller fragt: „Habt ihr alle eure Fahrkarten (inkl. 5 Euro)?“",
     "Im Matheunterricht rechnen wir heute: 15 + 25 = 40 (und 50% von 80 ist ebenfalls genau 40!).",
     "Oma backt heute leckeren Kuchen: 200g Mehl, 3 Eier & 100g Zucker. Mmmmh, wie das duftet!",
-    "Die Klasse 5b hat 12 Jungen & 14 Mädchen. Zusammen sind das 26 Kinder – eine tolle Gemeinschaft!",
+    "Die Klasse 5b hat 12 Jungen & 14 Mädchen. Zusammen sind das 26 Kinder - eine tolle Gemeinschaft!",
     "Sonne, Regen + Wind: Das Wetter im April ist wirklich verrückt (von 5°C bis 20°C ist alles dabei)!"
 ];
 
