@@ -349,9 +349,11 @@
             const target = roomData.text;
             let typed = "";
 
-            // Automatische Umwandlung von normalen Anführungszeichen (") zu typografischen („ oder “)
+            // Automatische Umwandlung von normalen Anführungszeichen (") und Bindestrichen (-)
             for (let i = 0; i < rawTyped.length; i++) {
                 if (rawTyped[i] === '"' && target[i] !== undefined && (target[i] === '„' || target[i] === '“')) {
+                    typed += target[i];
+                } else if (rawTyped[i] === '-' && target[i] !== undefined && target[i] === '–') {
                     typed += target[i];
                 } else {
                     typed += rawTyped[i];
