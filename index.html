@@ -24,7 +24,7 @@
         }
         .text-char-current {
             border-bottom: 3px solid #f59e0b;
-            background-color: rgba(245, 158, 11, 0.2);
+            background-color: rgba(245, 158, 11, 0.25);
         }
     </style>
 </head>
@@ -74,7 +74,7 @@
             </div>
         </div>
 
-        <!-- 2. WARTE-SCREEN (Warten auf Spieler 2) -->
+        <!-- 2. WARTE-SCREEN -->
         <div id="screen-waiting" class="hidden bg-slate-900 p-6 rounded-3xl border-2 border-slate-800 shadow-2xl text-center space-y-4">
             <div class="text-4xl animate-bounce">⏳</div>
             <h2 class="text-lg font-black text-amber-400">Warte auf Mitspieler...</h2>
@@ -104,7 +104,6 @@
                     </div>
                     <div class="relative w-full h-8 rounded-2xl star-track border border-slate-700/60 overflow-hidden flex items-center px-1">
                         <div id="p1-bar-fill" class="absolute left-0 top-0 bottom-0 bg-amber-500/20 transition-all duration-150" style="width: 0%"></div>
-                        <!-- Der Stern -->
                         <div id="p1-star" class="absolute star-icon text-xl text-amber-400 drop-shadow-[0_0_8px_rgba(245,158,11,0.8)]" style="left: 0%">
                             ⭐
                         </div>
@@ -119,7 +118,6 @@
                     </div>
                     <div class="relative w-full h-8 rounded-2xl star-track border border-slate-700/60 overflow-hidden flex items-center px-1">
                         <div id="p2-bar-fill" class="absolute left-0 top-0 bottom-0 bg-indigo-500/20 transition-all duration-150" style="width: 0%"></div>
-                        <!-- Der Stern -->
                         <div id="p2-star" class="absolute star-icon text-xl text-indigo-400 drop-shadow-[0_0_8px_rgba(99,102,241,0.8)]" style="left: 0%">
                             ⭐
                         </div>
@@ -138,9 +136,7 @@
                 </div>
 
                 <!-- ANZEIGE DES TEXTES -->
-                <div id="text-display" class="bg-slate-950 p-4 rounded-2xl border border-slate-800 font-mono text-base leading-relaxed tracking-wide min-h-[100px] break-words">
-                    <!-- Text wird hier dynamisch mit Highlighting gerendert -->
-                </div>
+                <div id="text-display" class="bg-slate-950 p-4 rounded-2xl border border-slate-800 font-mono text-base leading-relaxed tracking-wide min-h-[100px] break-words"></div>
 
                 <!-- EINGABE-FELD -->
                 <textarea id="typing-input" rows="2" placeholder="Tippe hier den oberen Text exakt ab..." disabled
@@ -156,7 +152,7 @@
 
         </div>
 
-        <!-- 4. GEWINNER / ENDSCREEN MODAL -->
+        <!-- 4. ENDSCREEN MODAL -->
         <div id="modal-winner" class="hidden fixed inset-0 bg-slate-950/95 backdrop-blur-sm flex items-center justify-center p-4 z-50">
             <div class="bg-slate-900 rounded-3xl border-2 border-slate-800 p-6 max-w-sm w-full text-center shadow-2xl space-y-4">
                 <div id="winner-icon" class="text-6xl">🏆</div>
@@ -188,7 +184,6 @@
     </main>
 
     <script>
-        // Token für diesen Tab/Spieler
         let myToken = sessionStorage.getItem('tipp_token');
         if (!myToken) {
             myToken = 'p_' + Math.random().toString(36).substring(2, 11);
@@ -206,14 +201,6 @@
         const screenGame = document.getElementById('screen-game');
         const typingInput = document.getElementById('typing-input');
         const textDisplay = document.getElementById('text-display');
-
-        async function sendAction(type, payload = {}) {
-            await fetch('/action', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ type, token: myToken, payload })
-            });
-        }
 
         async function createRoom() {
             myName = document.getElementById('input-name').value.trim() || 'Spieler 1';
@@ -267,28 +254,23 @@
         function renderState() {
             if (!roomData) return;
 
-            // Status: Warten auf 2. Spieler
             if (roomData.status === 'waiting') {
                 showWaitingScreen();
                 return;
             }
 
-            // Status: Countdown oder Spielen
             screenLobby.classList.add('hidden');
             screenWaiting.classList.add('hidden');
             screenGame.classList.remove('hidden');
 
             document.getElementById('game-room-code').textContent = roomData.code;
 
-            // Spieler zuordnen (Du vs. Gegner)
             const myPlayer = roomData.players.find(p => p.token === myToken);
             const opponent = roomData.players.find(p => p.token !== myToken);
 
-            // Namen anzeigen
             document.getElementById('p1-name-display').textContent = myPlayer ? `${myPlayer.name} (Du)` : 'Du';
             document.getElementById('p2-name-display').textContent = opponent ? opponent.name : 'Warte auf Gegner...';
 
-            // Fortschritt (Sterne ⭐ bewegen)
             const p1Prog = myPlayer ? myPlayer.progress : 0;
             const p2Prog = opponent ? opponent.progress : 0;
 
@@ -300,7 +282,6 @@
             document.getElementById('p2-bar-fill').style.width = `${p2Prog}%`;
             document.getElementById('p2-star').style.left = `calc(${Math.min(92, p2Prog)}%)`;
 
-            // Countdown Handling
             const overlay = document.getElementById('countdown-overlay');
             if (roomData.status === 'countdown') {
                 overlay.classList.remove('hidden');
@@ -318,7 +299,6 @@
                 document.getElementById('game-status-badge').textContent = '⚔️ Duell läuft!';
             }
 
-            // Winner Modal
             if (roomData.status === 'finished') {
                 typingInput.disabled = true;
                 const modal = document.getElementById('modal-winner');
@@ -328,8 +308,8 @@
                 document.getElementById('winner-icon').textContent = isWinner ? '🏆' : '🥈';
                 document.getElementById('winner-title').textContent = isWinner ? 'Gewonnen!' : 'Zweiter Platz!';
                 document.getElementById('winner-text').textContent = isWinner 
-                    ? 'Super gemacht! Du hast den Text schneller abgetippt.' 
-                    : 'Knapp verloren! Dein Gegner war diesmal ein Stück schneller.';
+                    ? 'Super gemacht! Du hast den Text fehlerfrei und am schnellsten getippt.' 
+                    : 'Knapp verloren! Dein Gegner war diesmal etwas schneller.';
 
                 if (myPlayer) {
                     document.getElementById('final-cpm').textContent = `${myPlayer.cpm} Z/Min`;
@@ -340,7 +320,6 @@
             }
         }
 
-        // TEXT HIGHLIGHTING & TIPP-LOGIK
         function renderTextHighlighting(typed) {
             if (!roomData || !roomData.text) return;
             const targetText = roomData.text;
@@ -369,21 +348,27 @@
             const typed = typingInput.value;
             const target = roomData.text;
 
-            // Fehler zählen
             let errors = 0;
             for (let i = 0; i < typed.length; i++) {
                 if (typed[i] !== target[i]) errors++;
             }
 
-            // Fortschritt berechnen
-            const correctChars = Math.max(0, typed.length - errors);
-            const progress = Math.min(100, Math.floor((typed.length / target.length) * 100));
+            // Exakte Prüfung der durchgehend korrekten Zeichenkette von Beginn an
+            let correctPrefixLength = 0;
+            while (
+                correctPrefixLength < typed.length && 
+                correctPrefixLength < target.length && 
+                typed[correctPrefixLength] === target[correctPrefixLength]
+            ) {
+                correctPrefixLength++;
+            }
 
-            // Tempo (Zeichen pro Minute)
+            // Der Fortschrittsbalken/Stern berechnet sich nur aus dem korrekten Teil
+            const progress = Math.floor((correctPrefixLength / target.length) * 100);
+
             const elapsedMinutes = (Date.now() - (startTime || Date.now())) / 60000;
             const cpm = elapsedMinutes > 0 ? Math.floor(typed.length / elapsedMinutes) : 0;
 
-            // Stats UI
             document.getElementById('stat-cpm').textContent = cpm;
             document.getElementById('stat-errors').textContent = errors;
             const accuracy = typed.length > 0 ? Math.max(0, Math.floor(((typed.length - errors) / typed.length) * 100)) : 100;
@@ -391,18 +376,33 @@
 
             renderTextHighlighting(typed);
 
-            // Sende Update an Server
-            sendAction('UPDATE_PROGRESS', {
-                roomCode: currentRoomCode,
-                progress: (typed === target) ? 100 : progress,
-                typedLength: typed.length,
-                errors,
-                cpm
+            // Sendet die eingegebenen Daten zur serverseitigen Überprüfung
+            fetch('/action', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    type: 'UPDATE_PROGRESS',
+                    token: myToken,
+                    payload: {
+                        roomCode: currentRoomCode,
+                        typedText: typed,
+                        errors,
+                        cpm
+                    }
+                })
             });
         });
 
         function restartGame() {
-            sendAction('RESTART_GAME', { roomCode: currentRoomCode });
+            fetch('/action', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    type: 'RESTART_GAME',
+                    token: myToken,
+                    payload: { roomCode: currentRoomCode }
+                })
+            });
         }
     </script>
 </body>
